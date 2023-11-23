@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
 class Program
 {
+   static int minBinCount = int.MaxValue;
+   static  int[] bestArrangement;
+    static int count_BF = 0;
+    static int count_FFS = 0;
+    static int count_P = 0;
     static void Main()
     {
+        
         int count;
         int n = 0;// количество предметов
         int M = 0;// вместимость одного контейнера
@@ -13,9 +18,9 @@ class Program
         bool flag = true;
         do
         {
-            Console.WriteLine("Нажмите 1 для ручного ввода и 2 для рандомных значений");
+            Console.WriteLine("Нажмите 1 для ручного ввода и 2 для рандомных значений и 3 для теста");
             count = Convert.ToInt32(Console.ReadLine());
-        } while (count != 1 && count != 2);
+        } while (count != 1 && count != 2 && count != 3);
         if (count == 1)
         {
 
@@ -30,6 +35,14 @@ class Program
                 Console.WriteLine("Введите массу  предмета " + (i + 1));
                 m[i] = Convert.ToInt32(Console.ReadLine());
             }
+            Console.WriteLine("количество предметов " + n);
+            Console.WriteLine("вместимость одного контейнера " + M);
+            Console.WriteLine("BF");
+            BF(n, M, m);
+            Console.WriteLine("FFS");
+            FFS(n, M, m);
+            Console.WriteLine("перебор");
+            enumeration(n, M, m);
 
 
         }
@@ -37,30 +50,68 @@ class Program
 
 
         {
-            n = generateRandInt(100, 200);
-            M = generateRandInt(100, 200);
+            n = generateRandInt(3,4);
+            M = generateRandInt(3,4);
             m = new int[n]; // массы предметов
 
             for (int i = 0; i < m.Length; i++)
             {
                 m[i] = generateRandInt(1, M);
             }
+            Console.WriteLine("количество предметов " + n);
+            Console.WriteLine("вместимость одного контейнера " + M);
+            Console.WriteLine("BF");
+            BF(n, M, m);
+            Console.WriteLine("FFS");
+            FFS(n, M, m);
+            Console.WriteLine("перебор");
+            enumeration(n, M, m);
 
         }
-        else
+        else if(count == 3)
+
+
         {
+            Console.WriteLine("Введите количество предметов");
+            n = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("Введите вместимость одного контейнера ");
+            M = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("Введите желаемое количество тестов ");
+            int test;
+            test= Convert.ToInt32(Console.ReadLine());
             m = new int[n]; // массы предметов
+            
+            int l = 0;
+
+            while (l < test)
+            {
+                minBinCount = int.MaxValue;
+
+                m = new int[n]; // массы предметов
+
+                for (int i = 0; i < m.Length; i++)
+                {
+                    m[i] = generateRandInt(1, M);
+                }
+
+                Console.WriteLine("Тест " + l);
+                Console.WriteLine("количество предметов " + n);
+                Console.WriteLine("вместимость одного контейнера " + M);
+                Console.WriteLine("BF");
+                BF(n, M, m);
+                Console.WriteLine("FFS");
+                FFS(n, M, m);
+                Console.WriteLine("перебор");
+                enumeration(n, M, m);
+                Console.WriteLine("--------------------------------------------------");
+                l++;
+            }
+
         }
-
-
-
-
-        Console.WriteLine("количество предметов " + n);
-        Console.WriteLine("вместимость одного контейнера " + M);
-        BF(n, M, m);
-        FFS(n, M, m);
-        enumeration(n, M, m);
-
+       
+        Console.WriteLine("bf " + count_BF);
+        Console.WriteLine("ffs " + count_FFS);
+         Console.WriteLine("p " + count_P);
     }
 
     public static int generateRandInt(int minValue, int maxValue)
@@ -76,42 +127,48 @@ class Program
         stopwatch.Start();
         List<List<int>> containers = new List<List<int>>(); // список контейнеров
         containers.Add(new List<int>()); // добавляем первый контейнер
-
         for (int i = 0; i < n; i++)
         {
-            bool itemAdded = false; // флаг, указывающий, был ли предмет добавлен в контейнер
-
-            // перебираем все контейнеры
+            int jMin = -1;
             for (int j = 0; j < containers.Count; j++)
             {
-                // проверяем, можно ли добавить предмет в текущий контейнер
-                if (containers[j].Sum() + m[i] <= M)
+                int remainingSpace = M - containers[j].Sum();
+                if (m[i] <= remainingSpace)
                 {
-                    containers[j].Add(m[i]); // добавляем номер предмета в контейнер
-                    itemAdded = true;
-                    break;
+                    // выбираем контейнер, в который, после добавления текущего элемента, остается минимум места
+                    if (jMin == -1 || remainingSpace < M - containers[jMin].Sum())
+                    {
+                        jMin = j;
+                    }
                 }
             }
 
-            // если предмет не был добавлен в существующий контейнер, создаем новый контейнер
-            if (!itemAdded)
+            // добавляем элемент либо в наилучший контейнер, либо создаем новый, если подходящего не нашлось
+            if (jMin == -1)
             {
                 containers.Add(new List<int> { m[i] });
             }
+            else
+            {
+                containers[jMin].Add(m[i]);
+            }
         }
-
+        stopwatch.Stop();
+        
         // выводим результаты
         Console.WriteLine("Количество использованных контейнеров: " + containers.Count);
+        count_BF += containers.Count;
         for (int i = 0; i < containers.Count; i++)
         {
 
-
             Console.WriteLine("Контейнер " + (i + 1) + ": " + string.Join(", ", containers[i].Select(x => x)));
         }
-        stopwatch.Stop();
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
+
+        double vad = stopwatch.ElapsedTicks;
+        Console.WriteLine("Time: " + vad / 10000 + " ms");
     }
-    static void FFS(int n, int M, int[] m)
+
+        static void FFS(int n, int M, int[] m)
     {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -155,54 +212,61 @@ class Program
                 containers.Add(newContainer);
             }
         }
+        stopwatch.Stop();
 
         Console.WriteLine();
         Console.WriteLine("Количество использованных контейнеров: " + containers.Count);
+        count_FFS += containers.Count;
 
         for (int i = 0; i < containers.Count; i++)
         {
             Console.WriteLine("Предметы в контейнере " + (i + 1) + ": " + string.Join(", ", containers[i]));
         }
-        stopwatch.Stop();
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
+        
+        double vad = stopwatch.ElapsedTicks;
+        Console.WriteLine("Time: " + vad/10000 + " ms");
     }
 
     static void enumeration(int n, int M, int[] weights)
     {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         Permute(weights, 0, weights.Length - 1, M);
+        stopwatch.Stop();
+        Console.WriteLine("Минимальное количество контейнеров: " + minBinCount);
+        count_P += minBinCount;
+        for (int i = 0; i < bestArrangement.Length; i++)
+        {
+            Console.Write(bestArrangement[i] + " ");
+        }
+        Console.WriteLine();
+        double vad = stopwatch.ElapsedTicks;
+        Console.WriteLine("Time: " + vad / 10000 + " ms");
     }
-
+    
     static void Permute(int[] arr, int startIndex, int endIndex, int M)
         {
-            if (startIndex == endIndex)
+        if (startIndex == endIndex)
+        {
+            int binCount = ApplyFirstFit(arr, M);
+            if (binCount < minBinCount)
             {
-                // Apply First Fit (FF) algorithm to arr
-                int binCount = ApplyFirstFit(arr, M);
-
-                // Print bins count used by permutation
-                Console.WriteLine("Bins count used: " + binCount);
-
-                // Print permutation
-                for (int i = 0; i <= endIndex; i++)
-                {
-                    Console.Write(arr[i] + " ");
-                }
-                Console.WriteLine();
+                minBinCount = binCount;
+                bestArrangement = new int[arr.Length];
+                Array.Copy(arr, bestArrangement, arr.Length);
             }
-            else
+            
+        }
+        else
+        {
+            for (int i = startIndex; i <= endIndex; i++)
             {
-                for (int i = startIndex; i <= endIndex; i++)
-                {
-                    // Swap the elements
-                    Swap(ref arr[startIndex], ref arr[i]);
-
-                    Permute(arr, startIndex + 1, endIndex, M);
-
-                    // Restore the original order of elements
-                    Swap(ref arr[startIndex], ref arr[i]);
-                }
+                Swap(ref arr[startIndex], ref arr[i]);
+                Permute(arr, startIndex + 1, endIndex, M);
+                Swap(ref arr[startIndex], ref arr[i]);
             }
         }
+    }
 
         static void Swap(ref int a, ref int b)
         {
@@ -217,7 +281,7 @@ class Program
 
             foreach (var weight in weights)
             {
-                // Find the first bin that can accommodate weights[i], and there are binCount bins
+                
                 int j;
                 for (j = 0; j < binCount; j++)
                 {
@@ -228,7 +292,7 @@ class Program
                     }
                 }
 
-                // If no bin can accommodate weights[i], create a new bin
+                
                 if (j == binCount)
                 {
                     bins[binCount] = M - weight;
